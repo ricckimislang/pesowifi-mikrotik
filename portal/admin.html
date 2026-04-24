@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin - Piso WiFi</title>
+<style>
+:root {
+  --bg: #1a1a2e;
+  --card: #16213e;
+  --text: #e94560;
+  --muted: #a0a0a0;
+  --border: #0f3460;
+  --accent: #e94560;
+  --good: #05c46b;
+  --warn: #ffc312;
+  --danger: #eb2f06;
+  --radius: 10px;
+  --mono: "Courier New", monospace;
+  --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: var(--sans);
+  background: var(--bg);
+  color: #fff;
+  min-height: 100vh;
+}
+.topnav {
+  background: var(--card);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0;
+  padding: 0 10px;
+}
+.topnav button {
+  background: none;
+  border: none;
+  color: var(--muted);
+  padding: 14px 16px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+.topnav button:hover { color: #fff; }
+.topnav button.active {
+  color: var(--accent);
+  border-bottom: 2px solid var(--accent);
+}
+.topnav .icon {
+  display: none;
+  background: none;
+  border: none;
+  color: var(--accent);
+  font-size: 18px;
+  padding: 12px 16px;
+  cursor: pointer;
+}
+.container {
+  max-width: 900px;
+  margin: 20px auto;
+  padding: 0 16px;
+}
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 18px;
+  margin-bottom: 16px;
+}
+.card-title {
+  font-size: 13px;
+  color: var(--accent);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 12px;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 8px;
+}
+.stat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+}
+.stat-box {
+  background: rgba(0,0,0,0.2);
+  border-radius: 8px;
+  padding: 14px;
+  text-align: center;
+}
+.stat-box .label {
+  font-size: 11px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 6px;
+}
+.stat-box .value {
+  font-family: var(--mono);
+  font-size: 22px;
+  font-weight: 700;
+  color: #fff;
+}
+.stat-box .value.good { color: var(--good); }
+.stat-box .value.danger { color: var(--danger); }
+.btn {
+  display: inline-block;
+  padding: 8px 14px;
+  border: none;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  color: #fff;
+  margin-top: 8px;
+}
+.btn:hover { opacity: 0.9; transform: translateY(-1px); }
+.btn-primary { background: var(--good); }
+.btn-danger { background: var(--danger); }
+.btn-warn { background: var(--warn); color: #000; }
+.btn-ghost {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--muted);
+}
+.btn-ghost:hover { color: #fff; border-color: var(--muted); }
+.form-group {
+  margin-bottom: 14px;
+}
+.form-group label {
+  display: block;
+  font-size: 12px;
+  color: var(--muted);
+  margin-bottom: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+input, select {
+  width: 100%;
+  max-width: 400px;
+  padding: 10px 12px;
+  background: rgba(0,0,0,0.2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: #fff;
+  font-size: 14px;
+  font-family: var(--sans);
+}
+input:focus, select:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+input[type="file"] { padding: 6px; }
+select option { background: var(--card); color: #fff; }
+.section-title {
+  font-size: 16px;
+  font-weight: 700;
+  margin-bottom: 14px;
+  color: var(--accent);
+}
+.row-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+}
+.rate-row {
+  background: rgba(0,0,0,0.15);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 14px;
+  margin-bottom: 10px;
+}
+.rate-row .grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 10px;
+}
+.voucher-list {
+  font-family: var(--mono);
+  font-size: 13px;
+  background: rgba(0,0,0,0.2);
+  border-radius: 8px;
+  padding: 14px;
+  margin-top: 10px;
+  max-height: 300px;
+  overflow-y: auto;
+  white-space: pre-wrap;
+  line-height: 1.6;
+}
+.spinner {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.7);
+  align-items: center;
+  justify-content: center;
+  z-index: 300;
+}
+.spinner.open { display: flex; }
+.spinner-inner {
+  text-align: center;
+}
+.spinner-inner h3 {
+  color: #fff;
+  font-size: 16px;
+  margin-top: 12px;
+}
+.loader {
+  width: 40px;
+  height: 40px;
+  border: 3px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.toast {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%) translateY(100px);
+  background: var(--card);
+  border: 1px solid var(--border);
+  color: #fff;
+  padding: 12px 20px;
+  border-radius: var(--radius);
+  font-size: 13px;
+  z-index: 200;
+  opacity: 0;
+  transition: all 0.3s;
+  white-space: nowrap;
+}
+.toast.show {
+  transform: translateX(-50%) translateY(0);
+  opacity: 1;
+}
+.tabcontent { display: none; }
+.tabcontent.active { display: block; }
+.login-overlay {
+  position: fixed;
+  inset: 0;
+  background: var(--bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 400;
+}
+.login-box {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 30px;
+  width: 100%;
+  max-width: 360px;
+}
+.login-box h2 {
+  text-align: center;
+  margin-bottom: 20px;
+  color: var(--accent);
+}
+@media (max-width: 600px) {
+  .topnav button:not(:first-child) { display: none; }
+  .topnav button.icon { display: block; }
+  .topnav.responsive button { display: block; width: 100%; text-align: left; }
+  .topnav.responsive button.icon { display: block; width: auto; position: absolute; right: 10px; top: 0; }
+  .stat-grid { grid-template-columns: 1fr 1fr; }
+}
+</style>
+</head>
+<body>
+
+<div class="login-overlay" id="loginOverlay">
+  <div class="login-box">
+    <h2>Admin Login</h2>
+    <div class="form-group">
+      <label>Username</label>
+      <input type="text" id="loginUser" placeholder="admin">
+    </div>
+    <div class="form-group">
+      <label>Password</label>
+      <input type="password" id="loginPass" placeholder="password">
+    </div>
+    <button class="btn btn-primary" style="width:100%;margin-top:10px;" onclick="doLogin()">Login</button>
+    <p style="text-align:center;margin-top:14px;font-size:12px;color:var(--muted);">
+      <a href="http://10.0.0.1" style="color:var(--muted);">Back to Portal</a>
+    </p>
+  </div>
+</div>
+
+<nav class="topnav" id="topnav">
+  <button class="tablinks active" onclick="openTab(event, 'Dashboard')">Dashboard</button>
+  <button class="tablinks" onclick="openTab(event, 'SystemConfig')">System Config</button>
+  <button class="tablinks" onclick="openTab(event, 'PromoRates')">Promo Rates</button>
+  <button class="tablinks" onclick="openTab(event, 'Vouchers')">Vouchers</button>
+  <button class="tablinks" onclick="openTab(event, 'Firmware')">Firmware</button>
+  <button class="tablinks" onclick="openTab(event, 'About')">About</button>
+  <button class="tablinks" onclick="logout()">Logout</button>
+  <button class="icon" onclick="toggleNav()">&#9776;</button>
+</nav>
+
+<div class="spinner" id="spinner">
+  <div class="spinner-inner">
+    <div class="loader"></div>
+    <h3 id="loadingText">Loading...</h3>
+  </div>
+</div>
+
+<div class="container">
+
+<div id="Dashboard" class="tabcontent active">
+  <div class="stat-grid">
+    <div class="stat-box">
+      <div class="label">Lifetime Income</div>
+      <div class="value" id="lifeIncome">0</div>
+    </div>
+    <div class="stat-box">
+      <div class="label">Current Sales</div>
+      <div class="value" id="currentSales">0</div>
+    </div>
+    <div class="stat-box">
+      <div class="label">Customers</div>
+      <div class="value" id="customerCount">0</div>
+    </div>
+    <div class="stat-box">
+      <div class="label">Uptime</div>
+      <div class="value" id="upTime">0d 0h</div>
+    </div>
+    <div class="stat-box">
+      <div class="label">Internet</div>
+      <div class="value" id="netStatus">Checking</div>
+    </div>
+    <div class="stat-box">
+      <div class="label">MikroTik</div>
+      <div class="value" id="mtStatus">Checking</div>
+    </div>
+    <div class="stat-box">
+      <div class="label">ESP MAC</div>
+      <div class="value" style="font-size:13px;" id="espMac">--</div>
+    </div>
+    <div class="stat-box">
+      <div class="label">ESP IP</div>
+      <div class="value" style="font-size:13px;" id="espIp">--</div>
+    </div>
+  </div>
+  <div class="row-actions">
+    <button class="btn btn-danger" onclick="resetStats('lifeTimeCount')">Reset Lifetime</button>
+    <button class="btn btn-danger" onclick="resetStats('coinCount')">Reset Sales</button>
+    <button class="btn btn-danger" onclick="resetStats('customerCount')">Reset Customers</button>
+    <button class="btn btn-ghost" onclick="refreshDashboard()">Refresh</button>
+  </div>
+</div>
+
+<div id="SystemConfig" class="tabcontent">
+  <div class="card">
+    <div class="card-title">Vendo Info</div>
+    <div class="form-group">
+      <label>Vendo Name</label>
+      <input type="text" id="vendoName" placeholder="My Piso WiFi">
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">WiFi Settings</div>
+    <div class="form-group">
+      <label>WiFi SSID</label>
+      <input type="text" id="wifiSSID" placeholder="PisoWiFi">
+    </div>
+    <div class="form-group">
+      <label>WiFi Password</label>
+      <input type="password" id="wifiPW" placeholder="password">
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">IP Address</div>
+    <div class="form-group">
+      <label>Mode</label>
+      <select id="ipMode" onchange="toggleStatic()">
+        <option value="0">DHCP</option>
+        <option value="1">Static</option>
+      </select>
+    </div>
+    <div id="staticBlock" style="display:none;">
+      <div class="form-group">
+        <label>Local IP</label>
+        <input type="text" id="localIp" placeholder="10.0.0.2">
+      </div>
+      <div class="form-group">
+        <label>Subnet Mask</label>
+        <input type="text" id="subnetMask" placeholder="255.255.255.0">
+      </div>
+      <div class="form-group">
+        <label>Gateway</label>
+        <input type="text" id="gatewayIp" placeholder="10.0.0.1">
+      </div>
+      <div class="form-group">
+        <label>DNS Server</label>
+        <input type="text" id="dnsServer" placeholder="8.8.8.8">
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">MikroTik API</div>
+    <div class="form-group">
+      <label>Router IP</label>
+      <input type="text" id="mtIp" placeholder="10.0.0.1">
+    </div>
+    <div class="form-group">
+      <label>API Username</label>
+      <input type="text" id="mtUser" placeholder="apiuser">
+    </div>
+    <div class="form-group">
+      <label>API Password</label>
+      <input type="password" id="mtPw" placeholder="password">
+    </div>
+    <div class="form-group">
+      <label>Confirm Password</label>
+      <input type="password" id="mtPwConfirm" placeholder="password">
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Admin Access</div>
+    <div class="form-group">
+      <label>Admin Username</label>
+      <input type="text" id="adminUser" placeholder="admin">
+    </div>
+    <div class="form-group">
+      <label>Admin Password</label>
+      <input type="password" id="adminPw" placeholder="password">
+    </div>
+    <div class="form-group">
+      <label>Confirm Password</label>
+      <input type="password" id="adminPwConfirm" placeholder="password">
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Coin Slot</div>
+    <div class="form-group">
+      <label>Insert Wait Time (seconds)</label>
+      <input type="number" id="coinWaitTime" value="60">
+    </div>
+    <div class="form-group">
+      <label>Abuse Count</label>
+      <input type="number" id="abuseCount" value="3">
+    </div>
+    <div class="form-group">
+      <label>Ban Minutes</label>
+      <input type="number" id="banMinutes" value="5">
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Pin Assignment</div>
+    <div class="form-group">
+      <label>Coin Slot Pin</label>
+      <select id="pinCoinSlot"></select>
+    </div>
+    <div class="form-group">
+      <label>Coin Slot Set Pin</label>
+      <select id="pinCoinSet"></select>
+    </div>
+    <div class="form-group">
+      <label>Ready LED Pin</label>
+      <select id="pinReadyLed"></select>
+    </div>
+    <div class="form-group">
+      <label>Insert LED Pin</label>
+      <select id="pinInsertLed"></select>
+    </div>
+    <div class="form-group">
+      <label>Insert Button Pin</label>
+      <select id="pinInsertBtn"></select>
+    </div>
+    <div class="form-group">
+      <label>LED Trigger Type</label>
+      <select id="ledTrigger">
+        <option value="0">LOW</option>
+        <option value="1">HIGH</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="row-actions">
+    <button class="btn btn-primary" onclick="saveSystemConfig()">Save</button>
+    <button class="btn btn-ghost" onclick="exportConfig()">Backup</button>
+    <button class="btn btn-ghost" onclick="importConfig()">Restore</button>
+    <input type="file" id="configFile" accept=".data" style="display:none" onchange="onConfigImport(this)">
+  </div>
+</div>
+
+<div id="PromoRates" class="tabcontent">
+  <div class="card">
+    <div class="card-title">Rates</div>
+    <div id="rateList"></div>
+    <button class="btn btn-primary" onclick="addRate()">Add Rate</button>
+  </div>
+  <div class="row-actions">
+    <button class="btn btn-primary" onclick="saveRates()">Save Rates</button>
+    <button class="btn btn-ghost" onclick="exportRates()">Backup</button>
+    <button class="btn btn-ghost" onclick="importRates()">Restore</button>
+    <input type="file" id="ratesFile" accept=".data" style="display:none" onchange="onRatesImport(this)">
+  </div>
+</div>
+
+<div id="Vouchers" class="tabcontent">
+  <div class="card">
+    <div class="card-title">Generate Vouchers</div>
+    <div class="form-group">
+      <label>Prefix (max 2 letters)</label>
+      <input type="text" id="voucherPrefix" value="PW" maxlength="2">
+    </div>
+    <div class="form-group">
+      <label>Amount (PHP)</label>
+      <input type="number" id="voucherAmount" value="10">
+    </div>
+    <div class="form-group">
+      <label>Quantity</label>
+      <input type="number" id="voucherQty" value="5" max="15">
+    </div>
+    <div class="form-group">
+      <label>Add to Sales</label>
+      <select id="voucherAddSales">
+        <option value="1">Yes</option>
+        <option value="0">No</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Append to Previous</label>
+      <select id="voucherAppend">
+        <option value="0">No</option>
+        <option value="1">Yes</option>
+      </select>
+    </div>
+    <button class="btn btn-primary" onclick="generateVouchers()">Generate</button>
+    <div class="voucher-list" id="voucherOutput"></div>
+  </div>
+</div>
+
+<div id="Firmware" class="tabcontent">
+  <div class="card">
+    <div class="card-title">Firmware Update</div>
+    <div class="form-group">
+      <label>Current Version</label>
+      <input type="text" id="fwVersion" value="1.0.0" readonly>
+    </div>
+    <div class="form-group">
+      <label>Bin Type</label>
+      <select id="binType">
+        <option value="sketch">Sketch (.ino.bin)</option>
+        <option value="filesystem">Filesystem (.spiffs.bin)</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Bin File</label>
+      <input type="file" id="binFile" accept=".bin">
+    </div>
+    <button class="btn btn-warn" onclick="uploadFirmware()">Update Firmware</button>
+    <p style="font-size:12px;color:var(--muted);margin-top:10px;">
+      If updating both, flash filesystem first, then sketch. System config is preserved automatically.
+    </p>
+  </div>
+</div>
+
+<div id="About" class="tabcontent">
+  <div class="card">
+    <div class="card-title">About</div>
+    <p style="font-size:14px;line-height:1.6;color:var(--muted);">
+      <strong style="color:#fff;">Piso WiFi Vendo System</strong><br>
+      Version: <span id="aboutVersion">1.0.0</span><br>
+      Hardware: ESP8266<br><br>
+      A standalone coin-operated WiFi hotspot system using ESP8266, MikroTik, and a coin acceptor.
+    </p>
+  </div>
+</div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="admin.js"></script>
+</body>
+</html>
