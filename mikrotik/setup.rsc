@@ -5,15 +5,14 @@
 # ========================
 # CONFIGURATION VARIABLES
 # ========================
-:local HOTSPOT_IFACE "wlan1"
-:local HOTSPOT_POOL "10.0.0.0/24"
-:local HOTSPOT_GATEWAY "10.0.0.1"
-:local ESP_IP "10.0.0.2"
-:local ESP_MAC "XX:XX:XX:XX:XX:XX"
-:local TELNET_USER "esptelnet"
-:local TELNET_PASS "securepassword123"
-:local VENDO_NAME "PisoWiFi"
-
+:global HOTSPOTIFACE "wlan1"
+:global HOTSPOTPOOL "10.0.0.0/24"
+:global HOTSPOTGATEWAY "10.0.0.1"
+:global ESPIP "10.0.0.2"
+:global ESPMAC "XX:XX:XX:XX:XX:XX"
+:global TELNETUSER "esptelnet"
+:global TELNETPASS "rekpesowifipassword"
+:global VENDONAME "DormitoryWifi"
 # ========================
 # 1. CREATE IP POOL (Reserve 2-50 for static devices)
 # ========================
@@ -22,19 +21,19 @@
 # ========================
 # 2. CREATE DHCP SERVER (with gateway DNS for captive portal)
 # ========================
-/ip dhcp-server add name=hs-dhcp interface=$HOTSPOT_IFACE address-pool=hs-pool lease-time=1h disabled=no
-/ip dhcp-server network add address=10.0.0.0/24 gateway=$HOTSPOT_GATEWAY dns-server=$HOTSPOT_GATEWAY
+/ip dhcp-server add name=hs-dhcp interface=$HOTSPOTIFACE address-pool=hs-pool lease-time=1h disabled=no
+/ip dhcp-server network add address=10.0.0.0/24 gateway=$HOTSPOTGATEWAY dns-server=$HOTSPOTGATEWAY
 
 # ========================
 # 3. ENABLE HOTSPOT (with proper timeouts)
 # ========================
-/ip hotspot add name=hotspot1 interface=$HOTSPOT_IFACE address-pool=hs-pool profile=default addresses-per-mac=1 idle-timeout=5m keepalive-timeout=15m session-timeout=4h
-/ip hotspot profile set [ find default=yes ] html-directory=hotspot login-by=http-chap,http-pap,mac-cookie smtp-server=0.0.0.0 split-user-domain=no default-domain="" dns-name="" hotspot-address=$HOTSPOT_GATEWAY idle-timeout=5m keepalive-timeout=15m session-timeout=4h
+/ip hotspot add name=hotspot1 interface=$HOTSPOTIFACE address-pool=hs-pool profile=default addresses-per-mac=1 idle-timeout=5m keepalive-timeout=15m session-timeout=4h
+/ip hotspot profile set [ find default=yes ] html-directory=hotspot login-by=http-chap,http-pap,mac-cookie smtp-server=0.0.0.0 split-user-domain=no default-domain="" dns-name="" hotspot-address=$HOTSPOTGATEWAY idle-timeout=5m keepalive-timeout=15m session-timeout=4h
 
 # ========================
 # 4. ADD IP BINDING (ESP BYPASS)
 # ========================
-/ip hotspot ip-binding add mac-address=$ESP_MAC address=$ESP_IP type=bypassed comment="ESP8266 Controller"
+/ip hotspot ip-binding add mac-address=$ESPMAC address=$ESPIP type=bypassed comment="ESP8266 Controller"
 
 # ========================
 # 5. WALLED GARDEN (ALLOW PORTAL + ESP BEFORE LOGIN)
@@ -52,7 +51,7 @@
 # ========================
 # 7. CREATE TELNET USER FOR ESP (with full permissions)
 # ========================
-/user add name=$TELNET_USER group=full password=$TELNET_PASS comment="ESP8266 Telnet Access"
+/user add name=$TELNETUSER group=full password=$TELNETPASS comment="ESP8266 Telnet Access"
 
 # ========================
 # 8. CREATE HOTSPOT USER PROFILE (BANDWIDTH LIMITS + TIMEOUTS)
