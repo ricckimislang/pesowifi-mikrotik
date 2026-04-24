@@ -40,6 +40,7 @@ uint16_t coinWaitTimeSec = DEFAULT_COIN_WAIT_TIME;
 bool readyLedState = false;
 bool insertLedState = false;
 bool sysReady = false;
+bool otaEnabled = false;
 
 // ===== INTERRUPT HANDLER =====
 void ICACHE_RAM_ATTR onCoinPulse() {
@@ -56,6 +57,7 @@ void setup() {
   Serial.begin(115200);
   delay(500);
   Serial.println("\n[PisoWiFi] Booting...");
+  randomSeed(ESP.getChipId() ^ micros());
 
   // Init storage
   eepromMgr.begin();
@@ -95,8 +97,16 @@ void setup() {
   initWiFi();
 
   // OTA
-  ArduinoOTA.setHostname("piso-wifi");
-  ArduinoOTA.begin();
+  if (strlen(sysCfg.adminPw) > 0) {
+    ArduinoOTA.setHostname("piso-wifi");
+    ArduinoOTA.setPassword(sysCfg.adminPw);
+    ArduinoOTA.begin();
+    otaEnabled = true;
+    spiffsMgr.log("ArduinoOTA enabled");
+  } else {
+    otaEnabled = false;
+    spiffsMgr.log("ArduinoOTA disabled: adminPw empty");
+  }
 
   // Web server
   webServer.begin();
@@ -112,7 +122,7 @@ void setup() {
 // ===== LOOP =====
 void loop() {
   ESP.wdtFeed();
-  ArduinoOTA.handle();
+  if (otaEnabled) ArduinoOTA.handle();
   webServer.handleClient();
   MDNS.update();
 
@@ -173,8 +183,11 @@ void initWiFi() {
   // Fallback: setup AP for configuration
   WiFi.mode(WIFI_AP_STA);
   String apName = String(AP_SSID_PREFIX) + "-" + String(ESP.getChipId(), HEX);
-  WiFi.softAP(apName.c_str(), "12345678");
-  Serial.println("[WiFi] AP mode: " + apName + " / 12345678");
+  String apPass = "PW" + String(ESP.getChipId(), HEX);
+  apPass.toUpperCase();
+  while (apPass.length() < 8) apPass += "0";
+  WiFi.softAP(apName.c_str(), apPass.c_str());
+  Serial.println("[WiFi] AP mode: " + apName + " / " + apPass);
 }
 
 // ===== LEDS =====

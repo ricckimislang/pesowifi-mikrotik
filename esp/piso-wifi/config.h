@@ -32,7 +32,7 @@
 #define DEFAULT_ESP_IP         IPAddress(10, 0, 0, 2)
 #define DEFAULT_GATEWAY        IPAddress(10, 0, 0, 1)
 #define DEFAULT_SUBNET         IPAddress(255, 255, 255, 0)
-#define DEFAULT_DNS            IPAddress(8, 8, 8, 8)
+#define DEFAULT_DNS            IPAddress(10, 0, 0, 1)
 
 // ===== WIFI =====
 #define WIFI_CONNECT_TIMEOUT    30000  // ms
@@ -45,6 +45,7 @@
 // ===== MIKROTIK TELNET =====
 #define MT_TELNET_PORT          23
 #define MT_TELNET_TIMEOUT       5000  // ms
+
 
 // ===== INTERNET CHECK =====
 #define INTERNET_CHECK_URL      "http://ifconfig.me"

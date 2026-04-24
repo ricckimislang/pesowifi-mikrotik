@@ -21,7 +21,13 @@ MacAttempt macAttempts[MAX_MAC_ATTEMPTS];
 
 void WebServerMgr::begin() {
   setupRoutes();
-  updateServer.setup(&server);
+  // Require Basic Auth for HTTP OTA update endpoint (/update)
+  const bool hasUpdateCreds = (strlen(sysCfg.adminUser) > 0) && (strlen(sysCfg.adminPw) > 0);
+  if (hasUpdateCreds) {
+    updateServer.setup(&server, "/update", sysCfg.adminUser, sysCfg.adminPw);
+  } else {
+    spiffsMgr.log("HTTP OTA disabled: adminUser/adminPw not set");
+  }
   server.begin();
   spiffsMgr.log("Web server started");
 }
@@ -33,7 +39,7 @@ void WebServerMgr::handleClient() {
 void WebServerMgr::sendCORS() {
   server.sendHeader("Access-Control-Allow-Origin", "*");
   server.sendHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
-  server.sendHeader("Access-Control-Allow-Headers", "Content-Type");
+  server.sendHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
 }
 
 void WebServerMgr::sendPlain(const String& text) {
@@ -235,7 +241,21 @@ void WebServerMgr::handleCoinStatus() {
 
 void WebServerMgr::handleFinalize() {
   sendCORS();
-  if (!sessionLocked || pulseCount == 0) {
+  
+  // Extract and validate MAC from request
+  String requestMac = server.arg("mac");
+  if (requestMac.length() == 0) {
+    sendError(400, "MAC address required");
+    return;
+  }
+  
+  // Validate MAC matches locked session
+  if (!sessionLocked || requestMac != lockedMac) {
+    sendError(403, "Invalid session or MAC mismatch");
+    return;
+  }
+  
+  if (pulseCount == 0) {
     sendError(400, "No coin to finalize");
     return;
   }
@@ -282,19 +302,23 @@ void WebServerMgr::handleFinalize() {
   
   // Call MikroTik Telnet
   bool mtOk = false;
+  String voucher = "";
   if (strlen(sysCfg.mtIp) > 0 && strlen(sysCfg.mtUser) > 0) {
     if (mtTelnet.connect(sysCfg.mtIp, MT_TELNET_PORT, sysCfg.mtUser, sysCfg.mtPw)) {
-      String voucher = String(sysCfg.voucherPrefix) + String(random(1000, 9999));
-      if (mtTelnet.registerVoucher(voucher.c_str(), sysCfg.voucherProfile)) {
-        if (mtTelnet.addTimeToVoucher(voucher.c_str(), minutes, minutes, 0, sysCfg.vendoName)) {
+      for (int attempt = 0; attempt < 10; attempt++) {
+        String candidate = String(sysCfg.voucherPrefix) + String(random(100000, 1000000));
+        if (mtTelnet.registerVoucher(candidate.c_str(), sysCfg.voucherProfile) &&
+            mtTelnet.addTimeToVoucher(candidate.c_str(), minutes, minutes, 0, sysCfg.vendoName)) {
+          voucher = candidate;
           mtOk = true;
+          break;
         }
       }
       mtTelnet.disconnect();
     }
   }
   
-  String resp = String(minutes) + "|" + (mtOk ? "1" : "0");
+  String resp = String(minutes) + "|" + (mtOk ? "1" : "0") + "|" + (mtOk ? voucher : "");
   
   // Handle MAC abuse tracking
   String mac = lockedMac;

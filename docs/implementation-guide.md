@@ -211,7 +211,7 @@ This guide walks through building, flashing, and deploying a standalone Piso WiF
    - `ESP8266mDNS` (included with core)
    - `ArduinoOTA` (included with core)
    - `EEPROM` (included with core)
-   - Custom `mikrotik_api` (local files below)
+   - Custom `mikrotik_telnet` (local files below)
 
 ### 3.2 Create `config.h`
 

@@ -86,10 +86,19 @@
         body,
         cache: "no-store",
       });
-      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      if (!r.ok) {
+        if (r.status === 403) {
+          showToast("Session expired - please try again");
+          unlockSession();
+          throw new Error("Session expired");
+        }
+        throw new Error(`HTTP ${r.status}`);
+      }
       return await r.text();
     } catch (e) {
-      showToast("ESP unreachable");
+      if (e.message !== "Session expired") {
+        showToast("ESP unreachable");
+      }
       throw e;
     }
   }
@@ -253,19 +262,45 @@
       closeCoinModal();
       return;
     }
+    let shouldAutoLogin = false;
+    let voucher = "";
     try {
       const data = await apiPost("/api/finalize", `mac=${encodeURIComponent(state.mac)}`);
       const parts = data.split("|");
       const minutes = parseInt(parts[0], 10) || 0;
-      if (minutes > 0) {
+      const okToken = (parts[1] || "").trim().toLowerCase();
+      const ok = okToken === "1" || okToken === "ok" || okToken === "true";
+      voucher = (parts[2] || "").trim();
+
+      if (ok && minutes > 0) {
         addTime(minutes * 60);
         showToast(`Added ${minutes} minutes`);
+        shouldAutoLogin = !!voucher;
+        if (!voucher) showToast("Voucher not received");
+      } else if (!ok) {
+        showToast("Voucher creation failed");
+      } else if (minutes <= 0) {
+        showToast("No time added");
       }
     } catch (e) {
       showToast("Failed to finalize coin");
     }
     state.locked = false;
     closeCoinModal();
+
+    if (shouldAutoLogin) {
+      const form = document.getElementById("mtLoginForm");
+      const user = document.getElementById("mtUser");
+      const pass = document.getElementById("mtPass");
+      if (!form || !user || !pass) {
+        showToast(`Voucher: ${voucher}`);
+        return;
+      }
+      showToast(`Voucher: ${voucher}`);
+      user.value = voucher;
+      pass.value = "";
+      form.submit();
+    }
   }
 
   function addTime(seconds) {

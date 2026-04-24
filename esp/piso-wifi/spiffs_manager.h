@@ -12,23 +12,34 @@ struct SystemConfig {
   char mtUser[32];
   char mtPw[64];
   uint16_t coinWaitTime;
+
   char adminUser[32];
   char adminPw[64];
+
   uint8_t abuseCount;
   uint8_t banMinutes;
+
   uint8_t pinCoinSlot;
   uint8_t pinCoinSet;
   uint8_t pinReadyLed;
   uint8_t pinInsertLed;
+  uint8_t lcdScreen; // placeholder for JuanFi-style ordering
   uint8_t pinInsertBtn;
+
+  uint8_t checkInternet;
+  char voucherPrefix[4];
+  char welcomeMsg[64];
   uint8_t ledTriggerHigh;
+  uint8_t setupDone;
+  uint8_t voucherLoginOpt;
+  char voucherProfile[16];
+  uint16_t voucherValidity;
+
   uint8_t ipMode;        // 0=DHCP, 1=Static
   char localIp[16];
   char gatewayIp[16];
   char subnetMask[16];
   char dnsServer[16];
-  char voucherPrefix[4];
-  uint8_t setupDone;
 };
 
 class SpiffsManager {

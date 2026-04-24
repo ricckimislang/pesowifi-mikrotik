@@ -36,9 +36,19 @@ ISP -> MikroTik hAP Lite -> Modem/AP Router -> Users
               -> ESP8266 (static IP 10.0.0.2)
 ```
 
-- User Captive Portal: `10.0.0.1` (hosted on MikroTik hotspot folder)
-- ESP8266 Admin Portal: `10.0.0.2/admin.html` (served from ESP SPIFFS)
-- ESP API: `10.0.0.2`
+- User Captive Portal: `http://10.0.0.1/` (hosted on MikroTik hotspot folder)
+- ESP8266 Admin Portal: `http://10.0.0.2/admin.html` (served from ESP SPIFFS)
+- ESP API: `http://10.0.0.2/`
+
+## Access Flow
+
+### For Customers:
+1. Connect to WiFi → Redirected to `http://10.0.0.1/` (MikroTik captive portal)
+2. Insert coins → Get internet access
+
+### For Administrators:
+1. Access admin dashboard directly at `http://10.0.0.2/admin.html` (ESP web server)
+2. Configure rates, view sales, manage system settings
 
 ## Project Structure
 
@@ -56,7 +66,7 @@ v3/
 │   ├── config.h        # Constants & defaults
 │   ├── eeprom_manager.h/.cpp   # Sales data persistence
 │   ├── spiffs_manager.h/.cpp   # Config & file storage
-│   ├── mikrotik_telnet.h/.cpp  # RouterOS Telnet CLI client
+│   ├── mikrotik_telnet.h/.cpp  # RouterOS Telnet CLI client (voucher-based)
 │   └── web_server.h/.cpp       # HTTP API endpoints
 └── docs/plans/
     └── draft.md        # System design plan
