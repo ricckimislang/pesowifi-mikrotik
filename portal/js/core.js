@@ -847,16 +847,82 @@ function removeStorageValue(key){
 function pause(){
 	var vc = getStorageValue("activeVoucher");
 	setStorageValue("isPaused", "1");
-	setStorageValue(vc+"remain", $("#remainTime").html());
-	document.logout.submit();
+	
+	// Get remaining time from the mikrotik timer or fallback to display element
+	var remainingTime = "00:00:00";
+	var remainingSeconds = 0;
+	
+	if(window.mikrotikTimer && window.mikrotikTimer.getCurrentTime){
+		remainingSeconds = window.mikrotikTimer.getCurrentTime();
+		// Convert seconds to display format
+		remainingTime = window.mikrotikTimer.formatTime ? 
+			window.mikrotikTimer.formatTime(remainingSeconds) : 
+			secondsToDhms(remainingSeconds);
+	} else {
+		var timeElement = document.getElementById('remainingTimeText');
+		if(timeElement){
+			remainingTime = timeElement.textContent;
+			// Try to parse the time back to seconds for resume
+			var timeParts = remainingTime.match(/(\d+)[h:](\d+)[m:](\d+)/);
+			if(timeParts){
+				remainingSeconds = parseInt(timeParts[1]) * 3600 + parseInt(timeParts[2]) * 60 + parseInt(timeParts[3]);
+			}
+		}
+	}
+	
+	// Save both the display format and seconds for resume
+	setStorageValue(vc+"remain", remainingTime);
+	setStorageValue(vc+"remainSeconds", remainingSeconds);
+	
+	// Show toast notification
+	if(typeof $.toast !== 'undefined'){
+		$.toast({
+			title: 'Session Paused',
+			content: 'Your session has been paused. You will be redirected to login.',
+			type: 'info',
+			delay: 3000
+		});
+	}
+	
+	// MikroTik hotspot logout URL - this pauses the session
+	setTimeout(function(){
+		window.location.href = "$(link-logout)";
+	}, 1000);
 }
 
 function resume(){
+	var vc = getStorageValue("activeVoucher");
+	
+	// Get the saved remaining seconds
+	var remainingSeconds = getStorageValue(vc+"remainSeconds");
+	if(remainingSeconds){
+		// Convert to number
+		remainingSeconds = parseInt(remainingSeconds);
+		
+		// Save the remaining time to a special storage that will be picked up on login
+		setStorageValue("resumedSessionSeconds", remainingSeconds);
+		setStorageValue("resumedSessionVoucher", vc);
+	}
+	
+	// Clear pause state
 	removeStorageValue("isPaused");
-	removeStorageValue("isPaused");
-	removeStorageValue("activeVoucher");
-	removeStorageValue("ignoreSaveCode");
-	location.reload();
+	removeStorageValue(vc+"remain");
+	removeStorageValue(vc+"remainSeconds");
+	
+	// Show toast notification
+	if(typeof $.toast !== 'undefined'){
+		$.toast({
+			title: 'Resuming Session',
+			content: 'Redirecting to login to resume your session...',
+			type: 'success',
+			delay: 2000
+		});
+	}
+	
+	// Redirect back to login page
+	setTimeout(function(){
+		window.location.href = "$(link-login)";
+	}, 1000);
 }
 
 function getStorageValue(key){

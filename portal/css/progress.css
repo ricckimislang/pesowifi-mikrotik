@@ -53,6 +53,12 @@ body {
     box-shadow: 0 0 10px rgba(235, 47, 6, 0.5);
 }
 
+.status-dot.paused {
+    background: #ffc312;
+    box-shadow: 0 0 10px rgba(255, 195, 18, 0.5);
+    animation: none;
+}
+
 .status-text {
     font-size: 14px;
     font-weight: 600;

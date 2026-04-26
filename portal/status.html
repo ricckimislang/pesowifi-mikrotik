@@ -12,12 +12,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1.0, user-scalable=no">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
 	<script>
-		var loginError = "";
+		var sessiontime = "$(session-time-left-secs)";
+		var currentVoucher = "$(username)";
+		window.name="hotspot_status";
 		var mac = "$(mac)";
-		var logoutUrl = "$(link-logout)";
-		var hotspotAddress = "$(server-address)"; 
-		var interfaceName = "$(interface-name)";
-		var remainingTimer = null;
 	</script>
 
 </head>
@@ -99,7 +97,18 @@
 					<button type="button" id="insertBtn" onclick="insertBtnAction(); return false" class="btn btn-success btn-block" data-insert-type="extend" data-toggle="modal">EXTEND TIME</button>
 					<button type="button" id="promoRateBtn" onclick="promoBtnAction(); return false" class="btn btn-warning btn-block mt-1">PROMO RATES</button>
 					<button type="button" id="pauseTimeBtn" onClick="pause(); return false" class="btn btn-danger btn-block mt-1">PAUSE TIME</button>
-			
+					<button type="button" id="resumeTimeBtn" onClick="resume(); return false" class="btn btn-success btn-block mt-1 d-none">RESUME TIME</button>
+					
+					<div id="pauseStatusInfo" class="mt-2 d-none">
+						<center>
+							<div class="alert alert-info">
+								<strong>Session Paused</strong><br>
+								<span id="pausedTimeDisplay"></span><br>
+								<small>Click RESUME TIME to continue your session</small>
+							</div>
+						</center>
+					</div>
+					
 					<div class="modal fade" id="insertCoinModal" data-backdrop="static" data-keyboard="false" tabindex="-1" role="dialog" aria-labelledby="insertCoinModalTitle" aria-hidden="true">
 						<div class="modal-dialog modal-dialog-centered modal-lg" role="document">
 						  <div class="modal-content">
@@ -197,23 +206,68 @@
 					</span>				
 				</div>
             </div>	
-			<script src="assets/js/jquery.min.js"></script>
-			<script src="assets/js/popper.min.js"></script>
-			<script src="assets/js/bootstrap.min.js"></script>
-			<script src="assets/js/toast.min.js"></script>
-			<script src="assets/js/core.js"></script>
+			<script src="js/core.js"></script>
 			<script src="js/mikrotik-timer.js"></script>
 
 			<script>
-				var sessiontime = "$(session-time-left-secs)";
-				var uptime = "$(uptime-secs)";
-				var currentVoucher = "$(username)";
-				window.name="hotspot_status";
 				
 				$(document).ready(function(){
 					voucher = currentVoucher;
 					
 					setStorageValue('activeVoucher', currentVoucher);
+					
+					// Check if this is a resumed session
+					var resumedSeconds = getStorageValue("resumedSessionSeconds");
+					var resumedVoucher = getStorageValue("resumedSessionVoucher");
+					
+					if(resumedSeconds && resumedVoucher === voucher){
+						// This is a resumed session - update the timer with saved time
+						console.log('Resuming session with', resumedSeconds, 'seconds');
+						
+						// Update session time variables
+						window.sessiontime = resumedSeconds;
+						sessiontime = resumedSeconds;
+						
+						// Update mikrotik timer if available
+						if(window.mikrotikTimer && window.mikrotikTimer.updateSessionTime){
+							window.mikrotikTimer.updateSessionTime(parseInt(resumedSeconds));
+						}
+						
+						// Clear resume storage
+						removeStorageValue("resumedSessionSeconds");
+						removeStorageValue("resumedSessionVoucher");
+						
+						// Show success notification
+						if(typeof $.toast !== 'undefined'){
+							$.toast({
+								title: 'Session Resumed',
+								content: 'Your session has been resumed with ' + secondsToDhms(parseInt(resumedSeconds)) + ' remaining.',
+								type: 'success',
+								delay: 5000
+							});
+						}
+					} else {
+						// Check if session was paused (legacy pause detection)
+						var isPaused = getStorageValue("isPaused");
+						if(isPaused == "1"){
+							// Show resume UI
+							$("#pauseTimeBtn").addClass("d-none");
+							$("#resumeTimeBtn").removeClass("d-none");
+							$("#pauseStatusInfo").removeClass("d-none");
+							
+							// Show paused time
+							var pausedTime = getStorageValue(voucher+"remain");
+							if(pausedTime){
+								$("#pausedTimeDisplay").text("Paused with " + pausedTime + " remaining");
+								$("#remainingTimeText").text(pausedTime);
+							}
+							
+							// Update connection status to show paused
+							$("#connectionStatus").text("Paused");
+							$("#connectionStatus").css("color", "#ffc312");
+							$("#statusDot").addClass("paused");
+						}
+					}
 					
 					var time = sessiontime;
 					if(time == "0"){
