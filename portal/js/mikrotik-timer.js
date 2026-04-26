@@ -329,8 +329,8 @@ class MikrotikTimerManager {
     }
 
     logout() {
-        // Try to submit logout form
-        const logoutForm = document.logout;
+        // Try to submit logout form using explicit ID
+        const logoutForm = document.getElementById('logoutForm') || document.logout || document.forms['logout'];
         if (logoutForm) {
             logoutForm.submit();
         } else {

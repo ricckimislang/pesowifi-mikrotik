@@ -43,6 +43,7 @@
     toast: document.getElementById("toast"),
     connectingOverlay: document.getElementById("connectingOverlay"),
   };
+  let resumeVoucher = null;
 
   function fmtTime(totalSeconds) {
     const s = Math.max(0, Math.floor(totalSeconds));
@@ -67,6 +68,25 @@
       el.connectingOverlay.classList.add("open");
     } else {
       el.connectingOverlay.classList.remove("open");
+    }
+  }
+
+  function getStorageValue(key) {
+    if (window.localStorage) {
+      return window.localStorage.getItem(key);
+    }
+    return null;
+  }
+
+  function setStorageValue(key, value) {
+    if (window.localStorage) {
+      window.localStorage.setItem(key, value);
+    }
+  }
+
+  function removeStorageValue(key) {
+    if (window.localStorage) {
+      window.localStorage.removeItem(key);
     }
   }
 
@@ -354,16 +374,40 @@
 
   function render() {
     el.timeRemaining.textContent = fmtTime(state.remainingSeconds);
-    if (state.running && state.remainingSeconds > 0) {
-      el.statusText.textContent = state.paused ? "Paused" : "Session active";
-      el.statusDot.className = "status-dot active";
+    if (state.remainingSeconds > 0) {
+      if (state.paused) {
+        el.statusText.textContent = "Paused session";
+        el.statusDot.className = "status-dot";
+      } else if (state.running) {
+        el.statusText.textContent = "Session active";
+        el.statusDot.className = "status-dot active";
+      } else {
+        el.statusText.textContent = "Ready to connect";
+        el.statusDot.className = "status-dot";
+      }
     } else if (state.sessionSeconds > 0 && state.remainingSeconds === 0) {
       el.statusText.textContent = "Time ended";
       el.statusDot.className = "status-dot expired";
+    } else {
+      el.statusText.textContent = "Waiting for coin";
+      el.statusDot.className = "status-dot";
     }
   }
 
   function connectInternet() {
+    if (resumeVoucher && state.remainingSeconds > 0) {
+      const form = document.getElementById("mtLoginForm");
+      const user = document.getElementById("mtUser");
+      const pass = document.getElementById("mtPass");
+      if (form && user && pass) {
+        user.value = resumeVoucher;
+        pass.value = "";
+        showConnecting(true);
+        form.submit();
+        return;
+      }
+    }
+
     if (!state.running || state.remainingSeconds <= 0) {
       showToast("Insert coin first");
       return;
@@ -374,6 +418,49 @@
       window.location.href = loginUrl;
     } else {
       showToast("Connected!");
+    }
+  }
+
+  function loadResumeSession() {
+    const resumedSeconds = parseInt(getStorageValue("resumedSessionSeconds"), 10);
+    const resumedVoucher = getStorageValue("resumedSessionVoucher");
+    const pausedVoucher = getStorageValue("activeVoucher");
+    const pausedSeconds = parseInt(getStorageValue((pausedVoucher || "") + "remainSeconds"), 10);
+    const remainingMikrotikTime = parseInt(typeof sessiontime !== 'undefined' ? sessiontime : "", 10);
+    const hasMikrotikTime = !isNaN(remainingMikrotikTime) && remainingMikrotikTime > 0;
+
+    let resumeSeconds = 0;
+    let resumeCode = null;
+
+    if (resumedSeconds > 0 && resumedVoucher) {
+      resumeSeconds = resumedSeconds;
+      resumeCode = resumedVoucher;
+    } else if (pausedVoucher && pausedSeconds > 0) {
+      resumeSeconds = pausedSeconds;
+      resumeCode = pausedVoucher;
+    } else if (hasMikrotikTime && currentVoucher) {
+      resumeSeconds = remainingMikrotikTime;
+      resumeCode = currentVoucher;
+    }
+
+    if (resumeSeconds > 0 && resumeCode) {
+      resumeVoucher = resumeCode;
+      state.sessionSeconds = resumeSeconds;
+      state.remainingSeconds = resumeSeconds;
+      state.running = true;
+      state.paused = true;
+      el.connectBtn.disabled = false;
+      el.connectBtn.textContent = "Resume Internet";
+      const user = document.getElementById("mtUser");
+      const pass = document.getElementById("mtPass");
+      if (user) {
+        user.value = resumeVoucher;
+      }
+      if (pass) {
+        pass.value = "";
+      }
+      showToast("Remaining session detected. Press Connect to resume.");
+      render();
     }
   }
 
@@ -407,6 +494,7 @@
     await loadRates();
     wireEvents();
     setStatus("", "Waiting for coin");
+    loadResumeSession();
     render();
   }
 

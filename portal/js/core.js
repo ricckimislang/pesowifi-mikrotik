@@ -245,7 +245,12 @@ function cancelPause(){
 		removeStorageValue("isPaused");
 		removeStorageValue("activeVoucher");
 		setStorageValue('forceLogout', "1");
-		document.logout.submit();
+		var logoutForm = document.getElementById('logoutForm');
+		if(logoutForm){
+			logoutForm.submit();
+		}else if(document.logout){
+			document.logout.submit();
+		}
 	}
 }
 
@@ -845,7 +850,11 @@ function removeStorageValue(key){
 }
 
 function pause(){
-	var vc = getStorageValue("activeVoucher");
+	if(!confirm('Pause your session?')){
+		return;
+	}
+
+	var vc = getStorageValue("activeVoucher") || mac;
 	setStorageValue("isPaused", "1");
 	
 	// Get remaining time from the mikrotik timer or fallback to display element
@@ -884,14 +893,29 @@ function pause(){
 		});
 	}
 	
-	// MikroTik hotspot logout URL - this pauses the session
+	// MikroTik hotspot logout URL - this pauses the session using the built-in logout action
 	setTimeout(function(){
-		window.location.href = "$(link-logout)";
+		var logoutForm = document.getElementById('logoutForm') || document.forms['logout'];
+		var logoutUrl = "$(link-logout)";
+		if(logoutForm && logoutForm.action){
+			logoutUrl = logoutForm.action;
+		}
+		// Ensure we have a valid logout URL
+		if(logoutUrl && logoutUrl !== "$(link-logout)"){
+			window.location.href = logoutUrl;
+		}else{
+			// Fallback to known MikroTik logout endpoint
+			window.location.href = "http://10.0.0.1/logout";
+		}
 	}, 1000);
 }
 
+function pauseSession(){
+	pause();
+}
+
 function resume(){
-	var vc = getStorageValue("activeVoucher");
+	var vc = getStorageValue("activeVoucher") || mac;
 	
 	// Get the saved remaining seconds
 	var remainingSeconds = getStorageValue(vc+"remainSeconds");

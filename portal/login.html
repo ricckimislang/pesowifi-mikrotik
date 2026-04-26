@@ -273,6 +273,8 @@ body {
 }
 </style>
 <script>
+var sessiontime = "$(session-time-left-secs)";
+var currentVoucher = "$(username)";
 // If opened as captive portal popup, stay here
 // If opened as normal browser, show login page
 if (window.location.href.indexOf('$(link-login)') === -1) {

@@ -11,6 +11,11 @@
 	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1.0, user-scalable=no">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<script src="js/jquery.min.js"></script>
+	<script src="js/popper.min.js"></script>
+	<script src="js/bootstrap.min.js"></script>
+	<script src="js/toast.min.js"></script>
+	<script src="js/core.js"></script>
 	<script>
 		var sessiontime = "$(session-time-left-secs)";
 		var currentVoucher = "$(username)";
@@ -24,10 +29,10 @@
 
 <div class="container">
 <center>
-		<form action="$(link-logout)" name="logout" >
+		<form action="$(link-logout)" name="logout" id="logoutForm">
 		</form>
 
-		<form action="$(link-logout)" name="forcelogout" >
+		<form action="$(link-logout)" name="forcelogout" id="forceLogoutForm">
 			<input type="hidden" name="erase-cookie" value="true" />
 		</form>
 		
@@ -96,7 +101,7 @@
 					
 					<button type="button" id="insertBtn" onclick="insertBtnAction(); return false" class="btn btn-success btn-block" data-insert-type="extend" data-toggle="modal">EXTEND TIME</button>
 					<button type="button" id="promoRateBtn" onclick="promoBtnAction(); return false" class="btn btn-warning btn-block mt-1">PROMO RATES</button>
-					<button type="button" id="pauseTimeBtn" onClick="pause(); return false" class="btn btn-danger btn-block mt-1">PAUSE TIME</button>
+					<button type="button" id="pauseTimeBtn" onClick="pauseSession(); return false" class="btn btn-danger btn-block mt-1">PAUSE TIME</button>
 					<button type="button" id="resumeTimeBtn" onClick="resume(); return false" class="btn btn-success btn-block mt-1 d-none">RESUME TIME</button>
 					
 					<div id="pauseStatusInfo" class="mt-2 d-none">
@@ -206,21 +211,20 @@
 					</span>				
 				</div>
             </div>	
-			<script src="js/core.js"></script>
-			<script src="js/mikrotik-timer.js"></script>
+		<script src="js/mikrotik-timer.js"></script>
 
-			<script>
+		<script>
+			
+			$(document).ready(function(){
+				// Use MAC address as the voucher key for consistent localStorage
+				voucher = mac || currentVoucher;
 				
-				$(document).ready(function(){
-					voucher = currentVoucher;
-					
-					setStorageValue('activeVoucher', currentVoucher);
-					
+				setStorageValue('activeVoucher', mac);
 					// Check if this is a resumed session
 					var resumedSeconds = getStorageValue("resumedSessionSeconds");
 					var resumedVoucher = getStorageValue("resumedSessionVoucher");
 					
-					if(resumedSeconds && resumedVoucher === voucher){
+					if(resumedSeconds && (resumedVoucher === mac || resumedVoucher === voucher)){
 						// This is a resumed session - update the timer with saved time
 						console.log('Resuming session with', resumedSeconds, 'seconds');
 						
@@ -255,8 +259,8 @@
 							$("#resumeTimeBtn").removeClass("d-none");
 							$("#pauseStatusInfo").removeClass("d-none");
 							
-							// Show paused time
-							var pausedTime = getStorageValue(voucher+"remain");
+// Show paused time using MAC-based storage key
+						var pausedTime = getStorageValue(mac+"remain");
 							if(pausedTime){
 								$("#pausedTimeDisplay").text("Paused with " + pausedTime + " remaining");
 								$("#remainingTimeText").text(pausedTime);
