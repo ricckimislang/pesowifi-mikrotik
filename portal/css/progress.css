@@ -1,0 +1,406 @@
+/* Progress Bar and Minimalistic Status Styles */
+
+body {
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+    color: #fff;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+    min-height: 100vh;
+    margin: 0;
+    padding: 20px;
+}
+
+.container {
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.login {
+    background: rgba(22, 33, 62, 0.9);
+    border: 1px solid rgba(15, 52, 96, 0.5);
+    border-radius: 16px;
+    padding: 30px;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+/* Connection Status */
+.connection-status {
+    margin-bottom: 25px;
+}
+
+.status-indicator {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 12px 20px;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 30px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.status-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #4cd137;
+    box-shadow: 0 0 10px rgba(76, 193, 55, 0.5);
+    animation: pulse 2s infinite;
+}
+
+.status-dot.disconnected {
+    background: #eb2f06;
+    box-shadow: 0 0 10px rgba(235, 47, 6, 0.5);
+}
+
+.status-text {
+    font-size: 14px;
+    font-weight: 600;
+    color: #fff;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.6; }
+}
+
+/* Voucher Display */
+.voucher-display {
+    margin-bottom: 30px;
+}
+
+.voucher-info {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 12px;
+    padding: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.voucher-label {
+    font-size: 12px;
+    color: #a0a0a0;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    display: block;
+    margin-bottom: 8px;
+}
+
+.voucher-code {
+    font-size: 24px;
+    font-weight: 700;
+    color: #e94560;
+    font-family: "Courier New", monospace;
+    letter-spacing: 2px;
+    text-shadow: 0 0 10px rgba(233, 69, 96, 0.3);
+}
+
+/* Time Progress Section */
+.time-progress-section {
+    margin-bottom: 30px;
+}
+
+.progress-container {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 16px;
+    padding: 25px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.progress-label {
+    font-size: 14px;
+    color: #a0a0a0;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.time-progress-bar {
+    position: relative;
+    width: 100%;
+    height: 24px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    overflow: hidden;
+    margin-bottom: 15px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #e94560, #ff6b6b);
+    border-radius: 12px;
+    transition: width 1s linear, background 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.progress-fill::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+    animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+    0% { left: -100%; }
+    100% { left: 100%; }
+}
+
+.progress-fill.warning {
+    background: linear-gradient(90deg, #ffc312, #ffd93d);
+}
+
+.progress-fill.danger {
+    background: linear-gradient(90deg, #eb2f06, #ff6348);
+}
+
+.progress-fill.expired {
+    background: linear-gradient(90deg, #ff4757, #ff6348);
+    animation: blink 1s infinite;
+}
+
+@keyframes blink {
+    0%, 50% { opacity: 1; }
+    51%, 100% { opacity: 0.6; }
+}
+
+.progress-text {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 12px;
+    font-weight: 600;
+    color: #fff;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+    z-index: 2;
+}
+
+.time-display {
+    font-size: 32px;
+    font-weight: 700;
+    color: #fff;
+    font-family: "Courier New", monospace;
+    text-align: center;
+    text-shadow: 0 0 10px rgba(255, 255, 255, 0.2);
+    letter-spacing: 2px;
+}
+
+.time-display.warning {
+    color: #ffc312;
+    text-shadow: 0 0 10px rgba(255, 195, 18, 0.3);
+}
+
+.time-display.danger {
+    color: #eb2f06;
+    text-shadow: 0 0 10px rgba(235, 47, 6, 0.3);
+}
+
+.time-display.expired {
+    color: #ff4757;
+    text-shadow: 0 0 15px rgba(255, 71, 87, 0.5);
+    animation: blink 1s infinite;
+}
+
+/* Device Info */
+.device-info {
+    margin-bottom: 25px;
+}
+
+.info-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 12px;
+    padding: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.info-item {
+    text-align: center;
+}
+
+.info-label {
+    display: block;
+    font-size: 11px;
+    color: #a0a0a0;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 5px;
+}
+
+.info-value {
+    font-size: 13px;
+    font-weight: 600;
+    color: #fff;
+    font-family: "Courier New", monospace;
+    word-break: break-all;
+}
+
+/* Data Usage */
+.data-usage {
+    margin-bottom: 25px;
+}
+
+.data-info {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 12px;
+    padding: 15px 20px;
+    margin-bottom: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.data-label {
+    font-size: 11px;
+    color: #a0a0a0;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    display: block;
+    margin-bottom: 5px;
+}
+
+.data-value {
+    font-size: 13px;
+    color: #fff;
+    font-weight: 500;
+}
+
+/* Buttons */
+.btn {
+    display: block;
+    width: 100%;
+    padding: 16px 24px;
+    border: none;
+    border-radius: 12px;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-align: center;
+    text-decoration: none;
+    margin-bottom: 12px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    position: relative;
+    overflow: hidden;
+}
+
+.btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: left 0.5s ease;
+}
+
+.btn:hover::before {
+    left: 100%;
+}
+
+.btn-success {
+    background: linear-gradient(135deg, #05c46b, #00d2d3);
+    color: #fff;
+    box-shadow: 0 4px 15px rgba(5, 196, 107, 0.3);
+}
+
+.btn-success:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(5, 196, 107, 0.4);
+}
+
+.btn-warning {
+    background: linear-gradient(135deg, #ffc312, #ffd93d);
+    color: #000;
+    box-shadow: 0 4px 15px rgba(255, 195, 18, 0.3);
+}
+
+.btn-warning:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(255, 195, 18, 0.4);
+}
+
+.btn-danger {
+    background: linear-gradient(135deg, #eb2f06, #ff6348);
+    color: #fff;
+    box-shadow: 0 4px 15px rgba(235, 47, 6, 0.3);
+}
+
+.btn-danger:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(235, 47, 6, 0.4);
+}
+
+/* Footer */
+.footer {
+    text-align: center;
+    margin-top: 30px;
+    padding: 20px;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.footers {
+    font-size: 12px;
+    color: #a0a0a0;
+}
+
+.footers a {
+    color: #e94560;
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.footers a:hover {
+    color: #ff6b6b;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    body {
+        padding: 10px;
+    }
+    
+    .login {
+        padding: 20px;
+    }
+    
+    .info-grid {
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+    
+    .time-display {
+        font-size: 24px;
+    }
+    
+    .voucher-code {
+        font-size: 20px;
+    }
+}
+
+@media (max-width: 480px) {
+    .time-display {
+        font-size: 20px;
+    }
+    
+    .voucher-code {
+        font-size: 18px;
+    }
+    
+    .btn {
+        padding: 14px 20px;
+        font-size: 14px;
+    }
+}

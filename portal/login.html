@@ -4,24 +4,23 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>$(identity) - Piso WiFi</title>
+<link rel="stylesheet" href="css/bootstrap.min.css">
+<link rel="stylesheet" href="css/toast.min.css">
+<link rel="stylesheet" href="css/core.css">
+<link rel="stylesheet" href="css/JuanFi.css">
+<link rel="stylesheet" href="css/progress.css">
 <style>
 :root {
   --bg: #1a1a2e;
   --card: #16213e;
-  --text: #e94560;
-  --muted: #a0a0a0;
-  --border: #0f3460;
   --accent: #e94560;
   --good: #05c46b;
   --warn: #ffc312;
   --danger: #eb2f06;
-  --radius: 12px;
-  --mono: "Courier New", monospace;
-  --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+  --muted: #a0a0a0;
+  --border: #0f3460;
 }
-* { box-sizing: border-box; margin: 0; padding: 0; }
 body {
-  font-family: var(--sans);
   background: var(--bg);
   color: #fff;
   min-height: 100vh;
@@ -30,13 +29,9 @@ body {
   justify-content: center;
   padding: 16px;
 }
-.container {
+.main-container {
   width: 100%;
   max-width: 480px;
-}
-.brand {
-  text-align: center;
-  margin-bottom: 20px;
 }
 .brand h1 {
   font-size: 24px;
@@ -48,10 +43,10 @@ body {
   color: var(--muted);
   margin-top: 4px;
 }
-.card {
+.custom-card {
   background: var(--card);
   border: 1px solid var(--border);
-  border-radius: var(--radius);
+  border-radius: 12px;
   padding: 20px;
   margin-bottom: 14px;
 }
@@ -62,12 +57,8 @@ body {
   letter-spacing: 1px;
   margin-bottom: 12px;
 }
-.timer {
-  text-align: center;
-  margin: 16px 0;
-}
 .timer .time {
-  font-family: var(--mono);
+  font-family: "Courier New", monospace;
   font-size: 48px;
   font-weight: 700;
   color: var(--accent);
@@ -77,13 +68,6 @@ body {
   font-size: 12px;
   color: var(--muted);
   margin-top: 4px;
-}
-.status {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  margin-bottom: 16px;
 }
 .status-dot {
   width: 10px;
@@ -98,43 +82,35 @@ body {
   font-size: 14px;
   font-weight: 600;
 }
-.btn {
-  display: block;
-  width: 100%;
-  padding: 14px;
-  border: none;
-  border-radius: var(--radius);
-  font-size: 16px;
-  font-weight: 700;
-  cursor: pointer;
-  transition: all 0.2s;
-  text-align: center;
-  text-decoration: none;
-  margin-bottom: 10px;
-}
-.btn-primary {
+.btn-custom-primary {
   background: var(--accent);
   color: #fff;
+  border: none;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 700;
+  padding: 14px;
+  transition: all 0.2s;
 }
-.btn-primary:hover { opacity: 0.9; transform: translateY(-1px); }
-.btn-primary:disabled {
+.btn-custom-primary:hover { opacity: 0.9; transform: translateY(-1px); }
+.btn-custom-primary:disabled {
   background: #444;
   color: #888;
   cursor: not-allowed;
   transform: none;
 }
-.btn-ghost {
+.btn-custom-ghost {
   background: transparent;
   border: 1px solid var(--border);
   color: #fff;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 700;
+  padding: 14px;
+  transition: all 0.2s;
 }
-.btn-ghost:hover { background: rgba(255,255,255,0.05); }
-.btn-ghost:disabled { opacity: 0.4; cursor: not-allowed; }
-.info-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-}
+.btn-custom-ghost:hover { background: rgba(255,255,255,0.05); }
+.btn-custom-ghost:disabled { opacity: 0.4; cursor: not-allowed; }
 .info-item {
   background: rgba(0,0,0,0.2);
   border-radius: 8px;
@@ -147,15 +123,11 @@ body {
   text-transform: uppercase;
 }
 .info-item .value {
-  font-family: var(--mono);
+  font-family: "Courier New", monospace;
   font-size: 12px;
   color: #fff;
   margin-top: 4px;
   word-break: break-all;
-}
-.rates {
-  display: grid;
-  gap: 8px;
 }
 .rate-row {
   display: flex;
@@ -164,6 +136,7 @@ body {
   padding: 10px 14px;
   background: rgba(0,0,0,0.2);
   border-radius: 8px;
+  margin-bottom: 8px;
 }
 .rate-row .coin {
   font-weight: 700;
@@ -183,11 +156,11 @@ body {
   padding: 16px;
   z-index: 100;
 }
-.modal-overlay.open { display: flex; }
+.modal-overlay.show { display: flex; }
 .modal-card {
   background: var(--card);
   border: 1px solid var(--border);
-  border-radius: var(--radius);
+  border-radius: 12px;
   width: 100%;
   max-width: 400px;
   overflow: hidden;
@@ -201,15 +174,12 @@ body {
 }
 .modal-header h3 {
   font-size: 16px;
+  color: #fff;
 }
 .modal-header .countdown {
-  font-family: var(--mono);
+  font-family: "Courier New", monospace;
   font-size: 14px;
   color: var(--accent);
-}
-.modal-body {
-  padding: 20px;
-  text-align: center;
 }
 .modal-body p {
   font-size: 13px;
@@ -217,7 +187,7 @@ body {
   margin-bottom: 16px;
 }
 .modal-body .coin-display {
-  font-family: var(--mono);
+  font-family: "Courier New", monospace;
   font-size: 36px;
   font-weight: 700;
   color: var(--warn);
@@ -227,13 +197,6 @@ body {
   font-size: 12px;
   color: var(--muted);
 }
-.modal-actions {
-  padding: 16px 20px;
-  border-top: 1px solid var(--border);
-  display: flex;
-  gap: 10px;
-}
-.modal-actions .btn { margin-bottom: 0; flex: 1; }
 .connecting-modal {
   position: fixed;
   top: 50%;
@@ -241,7 +204,7 @@ body {
   transform: translate(-50%, -50%);
   background: var(--card);
   border: 1px solid var(--border);
-  border-radius: var(--radius);
+  border-radius: 12px;
   padding: 24px;
   text-align: center;
   z-index: 300;
@@ -278,7 +241,7 @@ body {
   background: rgba(0,0,0,0.6);
   z-index: 299;
 }
-.connecting-overlay.open { display: block; }
+.connecting-overlay.show { display: block; }
 .toast {
   position: fixed;
   bottom: 20px;
@@ -288,7 +251,7 @@ body {
   border: 1px solid var(--border);
   color: #fff;
   padding: 12px 20px;
-  border-radius: var(--radius);
+  border-radius: 12px;
   font-size: 13px;
   z-index: 200;
   opacity: 0;
@@ -299,10 +262,6 @@ body {
   transform: translateX(-50%) translateY(0);
   opacity: 1;
 }
-.admin-link {
-  text-align: center;
-  margin-top: 10px;
-}
 .admin-link a {
   color: var(--muted);
   font-size: 12px;
@@ -311,7 +270,6 @@ body {
 .admin-link a:hover { color: var(--accent); }
 @media (max-width: 400px) {
   .timer .time { font-size: 36px; }
-  .info-grid { grid-template-columns: 1fr; }
 }
 </style>
 <script>
@@ -323,67 +281,71 @@ if (window.location.href.indexOf('$(link-login)') === -1) {
 </script>
 </head>
 <body data-login-url="$(link-login-only)" data-link-orig="$(link-orig)">
-<div class="container">
-  <div class="brand">
+<div class="main-container">
+  <div class="brand text-center mb-4">
     <h1 id="brandName">$(identity)</h1>
-    <p id="brandSub">Insert Coin to Connect</p>
+    <p id="brandSub" class="mb-0">Insert Coin to Connect</p>
   </div>
 
-  <div class="card">
-    <div class="status">
+  <div class="custom-card">
+    <div class="status d-flex justify-content-center align-items-center gap-2 mb-3">
       <div class="status-dot" id="statusDot"></div>
       <span class="status-text" id="statusText">Waiting for coin</span>
     </div>
-    <div class="timer">
+    <div class="timer text-center my-3">
       <div class="time" id="timeRemaining">00:00</div>
       <div class="label">Time Remaining</div>
     </div>
-    <button class="btn btn-primary" id="insertCoinBtn">Insert Coin</button>
-    <button class="btn btn-ghost" id="connectBtn" disabled>Connect to Internet</button>
+    <button class="btn w-100 btn-custom-primary mb-2" id="insertCoinBtn">Insert Coin</button>
+    <button class="btn w-100 btn-custom-ghost" id="connectBtn" disabled>Connect to Internet</button>
   </div>
 
-  <div class="card">
+  <div class="custom-card">
     <div class="card-title">Device Info</div>
-    <div class="info-grid">
-      <div class="info-item">
-        <div class="label">MAC Address</div>
-        <div class="value" id="macLabel">$(mac)</div>
+    <div class="row">
+      <div class="col-6">
+        <div class="info-item">
+          <div class="label">MAC Address</div>
+          <div class="value" id="macLabel">$(mac)</div>
+        </div>
       </div>
-      <div class="info-item">
-        <div class="label">IP Address</div>
-        <div class="value" id="ipLabel">$(ip)</div>
+      <div class="col-6">
+        <div class="info-item">
+          <div class="label">IP Address</div>
+          <div class="value" id="ipLabel">$(ip)</div>
+        </div>
       </div>
     </div>
   </div>
 
-  <div class="card">
+  <div class="custom-card">
     <div class="card-title">Promo Rates</div>
-    <div class="rates" id="ratesList">
+    <div id="ratesList">
       <div class="rate-row">
         <span class="coin">Loading...</span>
       </div>
     </div>
   </div>
 
-  <div class="admin-link">
+  <div class="admin-link text-center mt-3">
     <a href="http://10.0.0.2/admin.html" target="_blank" rel="noopener">Admin Dashboard</a>
   </div>
 </div>
 
 <div class="modal-overlay" id="coinModal">
   <div class="modal-card">
-    <div class="modal-header">
-      <h3>Insert Coin</h3>
+    <div class="modal-header d-flex justify-content-between align-items-center">
+      <h3 class="mb-0">Insert Coin</h3>
       <span class="countdown" id="coinCountdown">60</span>
     </div>
-    <div class="modal-body">
-      <p>Please insert your coin now.<br>Window closes in <b id="coinTimerText">60</b> seconds.</p>
+    <div class="modal-body text-center">
+      <p class="mb-3">Please insert your coin now.<br>Window closes in <b id="coinTimerText">60</b> seconds.</p>
       <div class="coin-display" id="coinAmount">PHP 0.00</div>
       <div class="pulse-count" id="pulseCount">0 pulses</div>
     </div>
-    <div class="modal-actions">
-      <button class="btn btn-ghost" id="cancelCoinBtn">Cancel</button>
-      <button class="btn btn-primary" id="confirmCoinBtn" disabled>Confirm</button>
+    <div class="modal-actions d-flex gap-2 p-3 border-top">
+      <button class="btn btn-custom-ghost flex-fill" id="cancelCoinBtn">Cancel</button>
+      <button class="btn btn-custom-primary flex-fill" id="confirmCoinBtn" disabled>Confirm</button>
     </div>
   </div>
 </div>
@@ -393,19 +355,24 @@ if (window.location.href.indexOf('$(link-login)') === -1) {
 <div class="connecting-overlay" id="connectingOverlay">
   <div class="connecting-modal">
     <div class="spinner"></div>
-    <h3>Connecting to Network</h3>
-    <p>Please wait while we establish your connection...</p>
+    <h3 class="mb-2">Connecting to Network</h3>
+    <p class="mb-0">Please wait while we establish your connection...</p>
   </div>
 </div>
 
 <!-- Hidden MikroTik login form (auto-submitted after voucher finalize) -->
-<form id="mtLoginForm" method="post" action="$(link-login-only)" style="display:none">
+<form id="mtLoginForm" method="post" action="$(link-login-only)" class="d-none">
   <input type="hidden" name="username" id="mtUser">
   <input type="hidden" name="password" id="mtPass">
   <input type="hidden" name="dst" value="$(link-orig)">
   <input type="hidden" name="popup" value="true">
 </form>
 
+<script src="js/jquery.min.js"></script>
+<script src="js/popper.min.js"></script>
+<script src="js/bootstrap.min.js"></script>
+<script src="js/toast.min.js"></script>
+<script src="js/core.js"></script>
 <script src="portal.js"></script>
 </body>
 </html>
