@@ -893,15 +893,22 @@ function pause(){
 		});
 	}
 	
-	// MikroTik hotspot logout URL - this pauses the session using the built-in logout action
+	// MikroTik hotspot logout URL - use the HTML form's action attribute
 	setTimeout(function(){
 		var logoutForm = document.getElementById('logoutForm') || document.forms['logout'];
-		var logoutUrl = "$(link-logout)";
+		var logoutUrl = "";
+		
+		// Get the logout URL from the HTML form (processed by MikroTik)
 		if(logoutForm && logoutForm.action){
 			logoutUrl = logoutForm.action;
 		}
-		// Ensure we have a valid logout URL
-		if(logoutUrl && logoutUrl !== "$(link-logout)"){
+		
+		// Ensure we have a valid logout URL and add the ? parameter for proper redirect
+		if(logoutUrl){
+			// Add ? if not already present to ensure proper redirect to login
+			if(logoutUrl.indexOf('?') === -1){
+				logoutUrl += '?';
+			}
 			window.location.href = logoutUrl;
 		}else{
 			// Fallback to known MikroTik logout endpoint
@@ -945,7 +952,8 @@ function resume(){
 	
 	// Redirect back to login page
 	setTimeout(function(){
-		window.location.href = "$(link-login)";
+		// Use relative path to login page
+		window.location.href = "login.html";
 	}, 1000);
 }
 

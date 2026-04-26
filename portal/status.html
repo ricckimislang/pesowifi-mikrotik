@@ -102,14 +102,13 @@
 					<button type="button" id="insertBtn" onclick="insertBtnAction(); return false" class="btn btn-success btn-block" data-insert-type="extend" data-toggle="modal">EXTEND TIME</button>
 					<button type="button" id="promoRateBtn" onclick="promoBtnAction(); return false" class="btn btn-warning btn-block mt-1">PROMO RATES</button>
 					<button type="button" id="pauseTimeBtn" onClick="pauseSession(); return false" class="btn btn-danger btn-block mt-1">PAUSE TIME</button>
-					<button type="button" id="resumeTimeBtn" onClick="resume(); return false" class="btn btn-success btn-block mt-1 d-none">RESUME TIME</button>
 					
 					<div id="pauseStatusInfo" class="mt-2 d-none">
 						<center>
 							<div class="alert alert-info">
 								<strong>Session Paused</strong><br>
 								<span id="pausedTimeDisplay"></span><br>
-								<small>Click RESUME TIME to continue your session</small>
+								<small>Return to login page to resume your session</small>
 							</div>
 						</center>
 					</div>
@@ -220,58 +219,6 @@
 				voucher = mac || currentVoucher;
 				
 				setStorageValue('activeVoucher', mac);
-					// Check if this is a resumed session
-					var resumedSeconds = getStorageValue("resumedSessionSeconds");
-					var resumedVoucher = getStorageValue("resumedSessionVoucher");
-					
-					if(resumedSeconds && (resumedVoucher === mac || resumedVoucher === voucher)){
-						// This is a resumed session - update the timer with saved time
-						console.log('Resuming session with', resumedSeconds, 'seconds');
-						
-						// Update session time variables
-						window.sessiontime = resumedSeconds;
-						sessiontime = resumedSeconds;
-						
-						// Update mikrotik timer if available
-						if(window.mikrotikTimer && window.mikrotikTimer.updateSessionTime){
-							window.mikrotikTimer.updateSessionTime(parseInt(resumedSeconds));
-						}
-						
-						// Clear resume storage
-						removeStorageValue("resumedSessionSeconds");
-						removeStorageValue("resumedSessionVoucher");
-						
-						// Show success notification
-						if(typeof $.toast !== 'undefined'){
-							$.toast({
-								title: 'Session Resumed',
-								content: 'Your session has been resumed with ' + secondsToDhms(parseInt(resumedSeconds)) + ' remaining.',
-								type: 'success',
-								delay: 5000
-							});
-						}
-					} else {
-						// Check if session was paused (legacy pause detection)
-						var isPaused = getStorageValue("isPaused");
-						if(isPaused == "1"){
-							// Show resume UI
-							$("#pauseTimeBtn").addClass("d-none");
-							$("#resumeTimeBtn").removeClass("d-none");
-							$("#pauseStatusInfo").removeClass("d-none");
-							
-// Show paused time using MAC-based storage key
-						var pausedTime = getStorageValue(mac+"remain");
-							if(pausedTime){
-								$("#pausedTimeDisplay").text("Paused with " + pausedTime + " remaining");
-								$("#remainingTimeText").text(pausedTime);
-							}
-							
-							// Update connection status to show paused
-							$("#connectionStatus").text("Paused");
-							$("#connectionStatus").css("color", "#ffc312");
-							$("#statusDot").addClass("paused");
-						}
-					}
 					
 					var time = sessiontime;
 					if(time == "0"){
