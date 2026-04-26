@@ -269,6 +269,13 @@ body {
   .info-grid { grid-template-columns: 1fr; }
 }
 </style>
+<script>
+// If opened as captive portal popup, stay here
+// If opened as normal browser, show login page
+if (window.location.href.indexOf('$(link-login)') === -1) {
+    window.location.replace('$(link-login)');
+}
+</script>
 </head>
 <body data-login-url="$(link-login-only)" data-link-orig="$(link-orig)">
 <div class="container">

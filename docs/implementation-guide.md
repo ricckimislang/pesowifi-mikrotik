@@ -148,14 +148,40 @@ This guide walks through building, flashing, and deploying a standalone Piso WiF
 4. Verify hotspot is running (`/ip/hotspot print`)
 5. Verify API service is enabled (`/ip/service print`)
 
-### 2.3 Add ESP IP Binding (Critical)
+### 2.3 Find ESP MAC Address
+
+**Why**: The ESP8266 MAC address is required for IP binding to bypass hotspot redirection.
+
+**Method 1 - Serial Monitor (Recommended)**:
+1. After flashing ESP firmware, open Arduino IDE Serial Monitor (115200 baud)
+2. Power on the ESP8266
+3. Look for boot messages - the MAC address is not directly printed, but you can find it by:
+   - Connect to the ESP's AP mode (SSID: `PisoWiFi-xxxxxxxx`)
+   - Open `192.168.4.1` in browser
+   - The MAC will be shown in the admin dashboard after initial setup
+
+**Method 2 - After Initial Setup**:
+1. Connect to ESP's AP or LAN IP
+2. Open admin dashboard at `http://10.0.0.2/admin.html`
+3. Login with default credentials (admin/admin)
+4. The ESP MAC address is displayed in the Dashboard tab under "ESP MAC"
+
+**Method 3 - Via Code**:
+If you have access to the ESP code, add this to print MAC:
+```cpp
+Serial.println(WiFi.macAddress());
+```
+
+**Note**: MAC address format is `XX:XX:XX:XX:XX:XX` (6 pairs of hex digits).
+
+### 2.4 Add ESP IP Binding (Critical)
 
 **Why**: The ESP must NOT be redirected by the hotspot. It needs direct access to the LAN and the MikroTik API.
 
 **Step**:
 1. WinBox -> IP -> Hotspot -> IP Bindings
 2. Click Add
-3. Set MAC address to ESP8266 MAC (printed on serial monitor at boot)
+3. Set MAC address to ESP8266 MAC (from previous step)
 4. Set Type: `bypassed`
 5. Set Address: `10.0.0.2` (static)
 6. Set To Address: `10.0.0.2`
@@ -168,7 +194,7 @@ This guide walks through building, flashing, and deploying a standalone Piso WiF
 **Step**:
 1. WinBox -> System -> Users
 2. Add user `espapi`
-3. Set password `securepassword123`
+3. Set password `rekpesowifipassword`
 4. Set Group: `write` or `full`
 5. Enable API service: `/ip/service/enable api`
 6. Disable API-SSL if not used: `/ip/service/disable api-ssl`
@@ -475,6 +501,7 @@ ROW_SEP = '#'
 
 - [ ] User portal files (`index.html`, `portal.js`) uploaded to MikroTik `hotspot/` folder
 - [ ] MikroTik script imported and running
+- [ ] ESP MAC address identified and noted
 - [ ] ESP IP binding (bypassed) added to Hotspot -> IP Bindings
 - [ ] Telnet service enabled on MikroTik (default port 23) and user for ESP created
 - [ ] ESP8266 flashed with all files (`piso-wifi.ino`, `config.h`, `eeprom_manager.h`, `spiffs_manager.h`, `mikrotik_telnet.h`, `web_server.h`)

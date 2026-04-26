@@ -16,6 +16,13 @@ struct MacAttempt {
   int attemptCount;
 };
 
+#define MAX_RATE_LIMIT_IPS 10
+struct RateLimitEntry {
+  String ip;
+  int requestCount;
+  unsigned long windowStart;
+};
+
 class WebServerMgr {
 public:
   void begin();
@@ -25,6 +32,8 @@ private:
   ESP8266WebServer server{HTTP_PORT};
   ESP8266HTTPUpdateServer updateServer;
   String adminAuth = ""; // base64(user:pass)
+  
+  RateLimitEntry rateLimits[MAX_RATE_LIMIT_IPS];
   
   void setupRoutes();
   void sendCORS();

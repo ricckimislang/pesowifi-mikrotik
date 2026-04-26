@@ -40,7 +40,7 @@
 
 // ===== WEB SERVER =====
 #define HTTP_PORT               80
-#define ADMIN_SESSION_TIMEOUT   300000 // 5 minutes
+#define ADMIN_SESSION_TIMEOUT   1800000 // 30 minutes
 
 // ===== MIKROTIK TELNET =====
 #define MT_TELNET_PORT          23

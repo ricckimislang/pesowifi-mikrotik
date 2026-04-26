@@ -20,6 +20,9 @@ extern uint16_t coinWaitTimeSec;
 MacAttempt macAttempts[MAX_MAC_ATTEMPTS];
 
 void WebServerMgr::begin() {
+  // Initialize rate limiting
+  memset(rateLimits, 0, sizeof(rateLimits));
+  
   setupRoutes();
   // Require Basic Auth for HTTP OTA update endpoint (/update)
   const bool hasUpdateCreds = (strlen(sysCfg.adminUser) > 0) && (strlen(sysCfg.adminPw) > 0);
@@ -77,6 +80,48 @@ bool WebServerMgr::isAuthorized() {
 void WebServerMgr::handleNotAuthorized() {
   server.sendHeader("WWW-Authenticate", "Basic realm=\"PisoWiFi Admin\"");
   server.send(401, "text/html", "<html><body><h1>401 Unauthorized</h1></body></html>");
+}
+
+bool WebServerMgr::checkRateLimit() {
+  String clientIP = server.client().remoteIP().toString();
+  unsigned long now = millis();
+  const unsigned long WINDOW_MS = 60000; // 1 minute
+  const int MAX_REQUESTS = 30; // 30 requests per minute
+  
+  // Find or create entry for this IP
+  int idx = -1;
+  int freeIdx = -1;
+  for (int i = 0; i < MAX_RATE_LIMIT_IPS; i++) {
+    if (rateLimits[i].ip == clientIP) {
+      idx = i;
+      break;
+    } else if (rateLimits[i].ip == "" && freeIdx == -1) {
+      freeIdx = i;
+    }
+  }
+  
+  if (idx >= 0) {
+    // Existing entry - check if window expired
+    if (now - rateLimits[idx].windowStart >= WINDOW_MS) {
+      // Reset window
+      rateLimits[idx].requestCount = 1;
+      rateLimits[idx].windowStart = now;
+      return true;
+    } else {
+      // Increment count
+      rateLimits[idx].requestCount++;
+      return rateLimits[idx].requestCount <= MAX_REQUESTS;
+    }
+  } else if (freeIdx >= 0) {
+    // New entry
+    rateLimits[freeIdx].ip = clientIP;
+    rateLimits[freeIdx].requestCount = 1;
+    rateLimits[freeIdx].windowStart = now;
+    return true;
+  }
+  
+  // No slots available - allow request but log
+  return true;
 }
 
 bool WebServerMgr::checkMacAbuse(const String& mac) {
@@ -155,6 +200,15 @@ void WebServerMgr::setupRoutes() {
   String authStr = String(sysCfg.adminUser) + ":" + String(sysCfg.adminPw);
   adminAuth = base64::encode(authStr);
   
+  // Generic OPTIONS handler for CORS preflight requests
+  server.onNotFound([this]() {
+    if (server.method() == HTTP_OPTIONS) {
+      sendCORS();
+      server.send(204, "text/plain", "");
+      return;
+    }
+  });
+  
   // Portal API
   server.on("/api/lock", HTTP_POST, [this]() { handleLock(); });
   server.on("/api/unlock", HTTP_GET, [this]() { handleUnlock(); });
@@ -183,6 +237,10 @@ void WebServerMgr::setupRoutes() {
 
 void WebServerMgr::handleLock() {
   sendCORS();
+  if (!checkRateLimit()) {
+    sendError(429, "Too many requests");
+    return;
+  }
   if (sessionLocked) {
     sendError(409, "Session already locked");
     return;
@@ -221,6 +279,10 @@ void WebServerMgr::handleLock() {
 
 void WebServerMgr::handleUnlock() {
   sendCORS();
+  if (!checkRateLimit()) {
+    sendError(429, "Too many requests");
+    return;
+  }
   sessionLocked = false;
   coinWindowOpen = false;
   String mac = lockedMac;
@@ -235,12 +297,20 @@ void WebServerMgr::handleUnlock() {
 
 void WebServerMgr::handleCoinStatus() {
   sendCORS();
+  if (!checkRateLimit()) {
+    sendError(429, "Too many requests");
+    return;
+  }
   String resp = String(pulseCount) + "|" + String(coinAmount);
   sendPlain(resp);
 }
 
 void WebServerMgr::handleFinalize() {
   sendCORS();
+  if (!checkRateLimit()) {
+    sendError(429, "Too many requests");
+    return;
+  }
   
   // Extract and validate MAC from request
   String requestMac = server.arg("mac");
@@ -300,10 +370,31 @@ void WebServerMgr::handleFinalize() {
   sales.customerCount++;
   eepromMgr.write(sales);
   
+  // Check MikroTik connectivity first
+  bool mtReachable = false;
+  if (strlen(sysCfg.mtIp) > 0) {
+    WiFiClient testClient;
+    mtReachable = testClient.connect(sysCfg.mtIp, MT_TELNET_PORT, 2000);
+    if (mtReachable) testClient.stop();
+  }
+  if (!mtReachable) {
+    spiffsMgr.log("MikroTik unreachable - aborting transaction");
+    // Reset state without creating voucher
+    sessionLocked = false;
+    coinWindowOpen = false;
+    pulseCount = 0;
+    coinAmount = 0;
+    lockedMac = "";
+    lockedIp = "";
+    digitalWrite(sysCfg.pinCoinSet, sysCfg.ledTriggerHigh ? LOW : HIGH);
+    sendError(503, "Router unreachable");
+    return;
+  }
+  
   // Call MikroTik Telnet
   bool mtOk = false;
   String voucher = "";
-  if (strlen(sysCfg.mtIp) > 0 && strlen(sysCfg.mtUser) > 0) {
+  if (strlen(sysCfg.mtUser) > 0) {
     if (mtTelnet.connect(sysCfg.mtIp, MT_TELNET_PORT, sysCfg.mtUser, sysCfg.mtPw)) {
       for (int attempt = 0; attempt < 10; attempt++) {
         String candidate = String(sysCfg.voucherPrefix) + String(random(100000, 1000000));
@@ -343,6 +434,10 @@ void WebServerMgr::handleFinalize() {
 
 void WebServerMgr::handleRates() {
   sendCORS();
+  if (!checkRateLimit()) {
+    sendError(429, "Too many requests");
+    return;
+  }
   String data = spiffsMgr.readFile(PATH_RATES);
   if (data.length() == 0) {
     data = "Piso Load|5|15|0||default#Piso Load|10|30|0||default#Piso Load|20|75|0||default#Piso Load|50|240|0||default";

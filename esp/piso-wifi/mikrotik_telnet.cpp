@@ -12,9 +12,25 @@ static void drainClient(WiFiClient& c) {
 
 static bool responseHasError(String resp) {
   resp.toLowerCase();
-  return resp.indexOf("failure") >= 0 || resp.indexOf("error") >= 0 || resp.indexOf("already have") >= 0 ||
-         resp.indexOf("invalid") >= 0 || resp.indexOf("no such item") >= 0 || resp.indexOf("err") >= 0 ||
-         resp.indexOf("login incorrect") >= 0;
+  // Check for explicit error indicators in various formats
+  if (resp.indexOf("failure") >= 0 || resp.indexOf("error") >= 0 || resp.indexOf("already have") >= 0 ||
+      resp.indexOf("invalid") >= 0 || resp.indexOf("no such item") >= 0 || resp.indexOf("err:") >= 0 ||
+      resp.indexOf("login incorrect") >= 0) {
+    return true;
+  }
+  // Check for RouterOS error output format markers
+  if (resp.indexOf("ERR") >= 0) return true;           // Explicit error from :put statements
+  if (resp.indexOf(":put \"err") >= 0) return true;    // Error messages from conditionals
+  if (resp.indexOf("was not executed") >= 0) return true;
+  if (resp.indexOf("negative number") >= 0) return true;
+  if (resp.indexOf("bad command name") >= 0) return true;
+  
+  // If response is only the prompt, likely a silent error
+  String trimmed = resp;
+  trimmed.trim();
+  if (trimmed.length() <= 1) return true;
+  
+  return false;
 }
 
 static String sanitizeRouterOsQuoted(String s) {

@@ -1,7 +1,10 @@
 # MikroTik HAP Lite Piso WiFi Setup Guide
 
 This guide provides step-by-step instructions for setting up a MikroTik HAP Lite router for Piso WiFi operations with ESP8266 integration.
-
+## Mikrotik RouterOs Version
+  RouterOs Version: 6.49.19
+  Mikrotik Model: HAP Lite
+  
 ## Table of Contents
 1. [Pre-setup Requirements](#pre-setup-requirements)
 2. [Initial Router Configuration](#initial-router-configuration)
@@ -47,8 +50,14 @@ This guide provides step-by-step instructions for setting up a MikroTik HAP Lite
 # Configure wireless interface
 /interface wireless set wlan1 mode=ap-bridge band=2ghz-b/g/n frequency=auto ssid=DormitoryWifi disabled=no
 
-# Set router IP address
-/ip address add address=10.0.0.1/24 interface=wlan1
+# Create bridge interface (required for hotspot services)
+/interface bridge add name=bridge-local
+
+# Add wireless interface to bridge
+/interface bridge port add bridge=bridge-local interface=wlan1
+
+# Set router IP address on bridge interface
+/ip address add address=10.0.0.1/24 interface=bridge-local
 
 # Enable wireless
 /interface wireless enable wlan1
@@ -63,30 +72,26 @@ If router has previous configuration:
 ## Script Customization
 
 ### 1. Open the Setup Script
-Navigate to `mikrotik/setup.rsc` and edit the configuration variables:
+Navigate to `mikrotik/setup1.rsc` and edit the configuration variables:
 
 ```bash
 # ========================
 # CONFIGURATION VARIABLES
 # ========================
-:local HOTSPOTIFACE "wlan1"           # Wireless interface name
-:local HOTSPOTPOOL "10.0.0.0/24"       # Network subnet
-:local HOTSPOTGATEWAY "10.0.0.1"      # Router IP address
-:local ESPIP "10.0.0.2"               # ESP static IP
-:local ESPMAC "XX:XX:XX:XX:XX:XX"     # ESP MAC address (update later)
-:local TELNETUSER "esptelnet"         # ESP telnet username
-:local TELNETPASS "rekpesowifipassword" # ESP telnet password (CHANGE THIS!)
-:local VENDONAME "DormitoryWifi"           # Your business name
+:global HOTSPOTPOOL "10.0.0.0/24"        # network subnet
+:global VENDONAME "DormitoryWifi"        # your business name
+:global HOTSPOTIFACE "bridge-local"      # use bridge interface when wlan1 is a bridge slave
+:global HOTSPOTGATEWAY "10.0.0.1"         # Router IP address
+:global ESPIP "10.0.0.2"                  # ESP static IP
+:global ESPMAC "XX:XX:XX:XX:XX:XX"        # ESP MAC address (update later)
+:global TELNETUSER "esptelnet"             # ESP telnet username
+:global TELNETPASS "rekpesowifipassword"  # ESP telnet password (CHANGE THIS!)
 ```
 
 ### 2. Required Changes
-- **`TELNETPASS`** - Change from default password
-- **`VENDONAME`** - Set to your business name
-- **`ESPMAC`** - Leave as placeholder for now
-
-### 3. Optional Changes
-- **`HOTSPOTIFACE`** - Only if using different interface
-- **Network settings** - Only if you need different IP range
+- **`TELNETPASS`** - CRITICAL: Change from default password to a secure value
+- **`ESPMAC`** - Leave as placeholder for now; update after discovering ESP MAC address
+- **`HOTSPOTIFACE`** - Only if using a different interface than bridge-local
 
 ## MAC Address Management
 
@@ -133,21 +138,22 @@ Copy and run this single command from the setup script:
 
 ### 1. Run the Complete Setup Script
 1. In WinBox, click **New Terminal**
-2. Copy the entire content of `mikrotik/setup.rsc`
+2. Copy the entire content of `mikrotik/setup1.rsc`
 3. Paste into terminal
 4. Press Enter
 5. Wait for all commands to complete (may take 1-2 minutes)
 
 ### 2. What the Script Does
-- Creates IP pool for DHCP
-- Sets up DHCP server with gateway as DNS
-- Enables hotspot with proper timeouts
-- Creates ESP bypass binding (with placeholder MAC)
-- Configures walled garden for portal access
-- Enables Telnet service for ESP communication
-- Creates ESP user with full permissions
-- Sets bandwidth limits and user profiles
-- Configures firewall rules for security
+- Creates IP pool (10.0.0.51-200) for DHCP clients
+- Configures DHCP server with gateway as DNS for captive portal
+- Enables hotspot with idle/keepalive/session timeouts
+- Creates ESP8266 bypass binding (allows direct access without login)
+- Configures walled garden with direct IP addresses (10.0.0.1 and 10.0.0.2) to allow portal and ESP access before login
+- Enables Telnet service restricted to ESP IP (10.0.0.2) for secure communication
+- Creates ESP telnet user with full permissions
+- Updates hotspot user profile with bandwidth limits (2M/2M) and session timeouts
+- Clears login/logout scripts to avoid interference
+- Adds firewall rule to block hotspot users from accessing management ports (8291/WinBox, 23/Telnet) on the hotspot interface
 
 ## Verification Steps
 
@@ -157,7 +163,7 @@ Copy and run this single command from the setup script:
 ```
 Should show:
 - Name: hotspot1
-- Interface: wlan1
+- Interface: bridge-local
 - Address-pool: hs-pool
 
 ### 2. Verify ESP Binding
@@ -168,7 +174,7 @@ Should show ESP binding (even with placeholder MAC)
 
 ### 3. Check Walled Garden
 ```bash
-/ip hotspot walled-garden print
+/ip hotspot walled-garden ip print
 ```
 Should show entries for 10.0.0.1 and 10.0.0.2
 
@@ -235,9 +241,24 @@ Should show Telnet enabled and restricted to 10.0.0.2
 # Check if you're blocked by firewall
 /ip firewall filter print
 
-# Temporarily disable firewall for testing
-/ip firewall filter disable [find comment="Block users from WinBox/Telnet"]
+# Find and view the management port blocking rule
+/ip firewall filter print where comment="Block hotspot users from management ports"
+
+# Temporarily disable for testing
+/ip firewall filter disable [find comment="Block hotspot users from management ports"]
+
+# To access WinBox from hotspot LAN, use a different interface or allow specific IPs
+# Example: Allow admin subnet to access management (adjust 192.168.1.0/24 to your admin network)
+/ip firewall filter add chain=input in-interface=ether1 src-address=192.168.1.0/24 action=accept \
+  dst-port=8291,23 protocol=tcp comment="Allow admin WinBox/Telnet access"
 ```
+
+#### Understanding the Firewall Rule
+The setup script adds a firewall rule that blocks management port access FROM the hotspot LAN interface. This is a **security measure**:
+- **What it does**: Prevents hotspot users from accessing WinBox (port 8291) or Telnet (port 23) via the hotspot interface
+- **Why**: Protects your router from unauthorized access or potential exploitation
+- **How it works**: Uses `in-interface=$HOTSPOTIFACE` to apply the rule only to traffic entering via the hotspot wireless interface
+- **If you need admin access from hotspot**: Connect via the LAN/WAN interface instead, or whitelist specific admin device IPs
 
 ### Reset Commands
 If something goes wrong:
