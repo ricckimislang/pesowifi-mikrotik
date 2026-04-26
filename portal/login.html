@@ -234,6 +234,51 @@ body {
   gap: 10px;
 }
 .modal-actions .btn { margin-bottom: 0; flex: 1; }
+.connecting-modal {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 24px;
+  text-align: center;
+  z-index: 300;
+  min-width: 280px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+}
+.connecting-modal .spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid var(--border);
+  border-top: 3px solid var(--accent);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 16px;
+}
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+.connecting-modal h3 {
+  font-size: 16px;
+  margin-bottom: 8px;
+  color: #fff;
+}
+.connecting-modal p {
+  font-size: 13px;
+  color: var(--muted);
+  margin: 0;
+}
+.connecting-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.6);
+  z-index: 299;
+}
+.connecting-overlay.open { display: block; }
 .toast {
   position: fixed;
   bottom: 20px;
@@ -344,6 +389,14 @@ if (window.location.href.indexOf('$(link-login)') === -1) {
 </div>
 
 <div class="toast" id="toast"></div>
+
+<div class="connecting-overlay" id="connectingOverlay">
+  <div class="connecting-modal">
+    <div class="spinner"></div>
+    <h3>Connecting to Network</h3>
+    <p>Please wait while we establish your connection...</p>
+  </div>
+</div>
 
 <!-- Hidden MikroTik login form (auto-submitted after voucher finalize) -->
 <form id="mtLoginForm" method="post" action="$(link-login-only)" style="display:none">

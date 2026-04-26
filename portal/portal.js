@@ -41,6 +41,7 @@
     cancelCoinBtn: document.getElementById("cancelCoinBtn"),
     confirmCoinBtn: document.getElementById("confirmCoinBtn"),
     toast: document.getElementById("toast"),
+    connectingOverlay: document.getElementById("connectingOverlay"),
   };
 
   function fmtTime(totalSeconds) {
@@ -61,6 +62,14 @@
     setTimeout(() => el.toast.classList.remove("show"), 2200);
   }
 
+  function showConnecting(show = true) {
+    if (show) {
+      el.connectingOverlay.classList.add("open");
+    } else {
+      el.connectingOverlay.classList.remove("open");
+    }
+  }
+
   function setStatus(kind, text) {
     el.statusText.textContent = text;
     el.statusDot.className = "status-dot";
@@ -68,6 +77,7 @@
   }
 
   async function apiGet(path) {
+    showConnecting(true);
     try {
       const r = await fetch(`${API_BASE}${path}`, { cache: "no-store" });
       if (!r.ok) throw new Error(`HTTP ${r.status}`);
@@ -75,10 +85,13 @@
     } catch (e) {
       showToast("ESP unreachable");
       throw e;
+    } finally {
+      showConnecting(false);
     }
   }
 
   async function apiPost(path, body) {
+    showConnecting(true);
     try {
       const r = await fetch(`${API_BASE}${path}`, {
         method: "POST",
@@ -100,6 +113,8 @@
         showToast("ESP unreachable");
       }
       throw e;
+    } finally {
+      showConnecting(false);
     }
   }
 
@@ -355,6 +370,7 @@
     }
     const loginUrl = document.body.dataset.loginUrl || "";
     if (loginUrl) {
+      showConnecting(true);
       window.location.href = loginUrl;
     } else {
       showToast("Connected!");
